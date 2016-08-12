@@ -19,14 +19,17 @@ namespace ElektronicznyNadawca
             this.password = password;
             this.user = user;
         }
+
         public void setServiceAddress(Uri url)
         {
             serviceUrl = url;
         }
+
         public void setWSDLAddress(Uri url)
         {
             wsdlUrl = url;
         }
+
         private void setCredential()
         {
             checkCredential();
@@ -60,12 +63,14 @@ namespace ElektronicznyNadawca
             setCredential();
             return this.client.hello(parameter);
         }
+
         public ENLabs.accountType[] getAccountList()
         {
             setCredential();
             ENLabs.accountType[] accountList = this.client.getAccountList();
             return accountList;
         }
+
         public ENLabs.profilType[] getUserProfileList(String userName)
         {
             setCredential();
@@ -79,10 +84,12 @@ namespace ElektronicznyNadawca
             }
             throw new Exception("Nie znaleziono użytkownika " + userName);
         }
+
         public ENLabs.profilType[] getCurrentUserProfileList()
         {
             return this.getUserProfileList(this.user);
         }
+
         public ENLabs.accountType getCurrentUserAccount()
         {
             setCredential();
@@ -95,6 +102,7 @@ namespace ElektronicznyNadawca
             }
             throw new Exception("Błąd pobierania listy użytkowników");
         }
+
         public ENLabs.addShipmentResponseItemType[] addShipment(List<ENLabs.przesylkaType> przesylki, int? idBufor = null)
         {
             setCredential();
@@ -103,6 +111,7 @@ namespace ElektronicznyNadawca
             else
                 return this.client.addShipment(przesylki.ToArray(), 0, false);
         }
+
         public ENLabs.errorType[] createEnvelopeBufor(ENLabs.buforType bufor)
         {
             setCredential();
@@ -119,19 +128,23 @@ namespace ElektronicznyNadawca
             }
             return errors;
         }
+
         public ENLabs.errorType[] setAktywnaKarta(int idKarta)
         {
             setCredential();
             return this.client.setAktywnaKarta(idKarta);
         }
+
         public ENLabs.urzadNadaniaFullType[] getUrzedyNadania()
         {
             setCredential();
             return client.getUrzedyNadania();
         }
+
         public byte[] getAddresLabelByGuidCompact(string[] guid, int idBufor, out ENLabs.errorType[] errors)
         {
             setCredential();
+            errors = null;
             byte[] labels = this.client.getAddresLabelByGuidCompact(guid, idBufor, true, out errors);
             foreach (ENLabs.errorType error in errors)
             {
@@ -141,6 +154,55 @@ namespace ElektronicznyNadawca
                 }
             }
             return labels;
+        }
+
+        public int sendEnvelope(ENLabs.buforType bufor, out ENLabs.errorType[] errors)
+        {
+            setCredential();
+            errors = null;
+            int idEnvelope;
+            ENLabs.envelopeStatusType envelopeStatus;
+            bool envelopeStatusSpecified;
+            bool idEnvelopeSpecified;
+            String envelopeFileName;
+            this.client.sendEnvelope(bufor.urzadNadania, true, null, bufor.idBufor, true, bufor.profil, out idEnvelope, out idEnvelopeSpecified, out envelopeStatus, out envelopeStatusSpecified, out errors, out envelopeFileName);
+
+            if(idEnvelope != 0)
+            {
+                System.Console.WriteLine(" otrzymany idEnvelope = "+ idEnvelope+" "+ envelopeFileName);
+                return idEnvelope;
+            }
+            else
+            {
+                throw new Exception("Wystąpiły błędy podczas wysyłania przesyłek");
+            }
+        }
+
+        public byte[] getAddresLabelCompact(int idEnvelope, out ENLabs.errorType[] errors)
+        {
+            setCredential();
+            errors = null;
+            byte[] etykiety = this.client.getAddresLabelCompact(idEnvelope, out errors);
+            if(etykiety == null)
+            {
+                throw new Exception("Nie powiodło się pobranie etykiet do wysłanych przesyłek");
+            }
+            return etykiety;
+        }
+
+        public ENLabs.addressLabelContent[] getAddressLabel(int idEnvelope, out ENLabs.errorType[] errors)
+        {
+            setCredential();
+            errors = null;
+            ENLabs.addressLabelContent[] etykiety = client.getAddressLabel(idEnvelope, out errors);
+            if(etykiety != null)
+            {
+                return etykiety;
+            }
+            else
+            {
+                throw new Exception("Nie powiodło się pobranie etykiet do wysłanych przesyłek");
+            }
         }
     }
 }
